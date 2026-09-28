@@ -24,12 +24,19 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
       - name: Install System Dependencies
         run: |
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libssl-dev libffi-dev cmake gettext
 
-      - name: Install Buildozer and Dependencies
+      - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
           pip install "cython<3.0.0" buildozer
@@ -37,11 +44,8 @@ jobs:
       - name: Configure buildozer.spec
         run: |
           if [ -f buildozer.spec ]; then
-            # Automatically accept SDK licenses
             sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
             sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-            
-            # Clean requirement definitions
             sed -i 's/requirements =.*/requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,urllib3,plyer/g' buildozer.spec
           fi
 
