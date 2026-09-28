@@ -7,48 +7,28 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install System Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libssl-dev libffi-dev cmake gettext
-
-      - name: Install Buildozer & Cython
-        run: |
-          pip install --upgrade pip
-          pip install buildozer "cython<3.0.0"
-
-      - name: Configure buildozer.spec
+      - name: Enable SDK License Acceptance
         run: |
           if [ -f buildozer.spec ]; then
-            # Enable auto-accepting SDK licenses
             sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
             sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-            
-            # Pin p4a python target to 3.10.12 explicitly inside requirements
-            sed -i 's/requirements =.*/requirements = python3==3.10.12,kivy==2.3.0,kivymd==1.2.0,pillow,urllib3,plyer/g' buildozer.spec
           fi
 
-      - name: Build APK with Buildozer
-        run: |
-          export WARN_ON_ROOT=0
-          # Pass 'y' to license prompt without triggering broken pipe
-          buildozer -v android debug <<EOF
-          y
-          EOF
+      - name: Build APK with Buildozer Action
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          workdir: .
+          buildozer_version: stable
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SportsBeacon-APK
-          path: bin/*.apk
+          path: ${{ steps.buildozer.outputs.filename }}
