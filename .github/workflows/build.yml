@@ -24,13 +24,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Android SDK Licenses
-        run: |
-          yes | sdkmanager --licenses || true
-
       - name: Install System Dependencies
         run: |
           sudo apt update
@@ -48,6 +41,13 @@ jobs:
             sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
             sed -i 's/requirements =.*/requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,urllib3,plyer/g' buildozer.spec
           fi
+
+      - name: Pre-accept Android SDK Licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          # Accept licenses by piping 'y' into buildozer's android update process
+          yes | buildozer android update || true
 
       - name: Build APK
         run: |
