@@ -31,19 +31,21 @@ jobs:
       - name: Configure buildozer.spec
         run: |
           if [ -f buildozer.spec ]; then
-            # Enable auto-accepting SDK licenses in buildozer spec
+            # Enable auto-accepting SDK licenses
             sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
             sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
             
-            # Clean requirements string for python-for-android
-            sed -i 's/requirements =.*/requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,urllib3,plyer/g' buildozer.spec
+            # Pin p4a python target to 3.10.12 explicitly inside requirements
+            sed -i 's/requirements =.*/requirements = python3==3.10.12,kivy==2.3.0,kivymd==1.2.0,pillow,urllib3,plyer/g' buildozer.spec
           fi
 
       - name: Build APK with Buildozer
         run: |
           export WARN_ON_ROOT=0
-          # Pre-accept licenses automatically via standard input pipe
-          (echo y; sleep 1; echo y; sleep 1; echo y; sleep 1; echo y) | buildozer -v android debug
+          # Pass 'y' to license prompt without triggering broken pipe
+          buildozer -v android debug <<EOF
+          y
+          EOF
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
