@@ -8,38 +8,54 @@ from kivy.uix.button import Button
 from kivy.clock import mainthread
 import threading
 
-# YOUR LIVE RENDER URL
 API_BASE_URL = "https://sports-beacon-api.onrender.com"
 
 class LoginScreen(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
-        self.padding = 30
+        self.padding = [40, 60, 40, 60]
         self.spacing = 15
 
         self.add_widget(Label(
             text="SPORTS BEACON",
-            font_size=32,
+            font_size='28sp',
             bold=True,
-            color=(0, 0.4, 0.4, 1)
+            color=(0, 0.4, 0.4, 1),
+            size_hint_y=None,
+            height=50
         ))
         
+        self.add_widget(Label(
+            text="Coastal Matchmaking Platform",
+            font_size='14sp',
+            color=(0.5, 0.5, 0.5, 1),
+            size_hint_y=None,
+            height=30
+        ))
+
+        # Email Input
         self.email_input = TextInput(
             hint_text="Email",
             multiline=False,
-            write_tab=False
+            write_tab=False,
+            size_hint_y=None,
+            height=45
         )
         self.add_widget(self.email_input)
 
+        # Password Input
         self.password_input = TextInput(
             hint_text="Password",
             password=True,
             multiline=False,
-            write_tab=False
+            write_tab=False,
+            size_hint_y=None,
+            height=45
         )
         self.add_widget(self.password_input)
 
+        # Log In Button
         self.login_btn = Button(
             text="LOG IN",
             background_color=(0, 0.3, 0.3, 1),
@@ -49,9 +65,22 @@ class LoginScreen(BoxLayout):
         self.login_btn.bind(on_press=self.do_login)
         self.add_widget(self.login_btn)
 
+        # Register Button
+        self.register_btn = Button(
+            text="REGISTER ACCOUNT",
+            background_color=(0.2, 0.2, 0.2, 1),
+            size_hint_y=None,
+            height=40
+        )
+        self.register_btn.bind(on_press=self.do_register)
+        self.add_widget(self.register_btn)
+
+        # Status Label
         self.status_label = Label(
             text="",
-            color=(0.8, 0.2, 0.2, 1)
+            color=(0.8, 0.2, 0.2, 1),
+            size_hint_y=None,
+            height=40
         )
         self.add_widget(self.status_label)
 
@@ -63,14 +92,22 @@ class LoginScreen(BoxLayout):
             self.status_label.text = "Please enter email and password."
             return
 
-        self.status_label.text = "Connecting..."
-        # Send request on a background thread to keep UI smooth
-        threading.Thread(target=self._send_login_request, args=(email, password)).start()
+        self.status_label.text = "Connecting to backend..."
+        threading.Thread(target=self._send_request, args=(f"{API_BASE_URL}/login", email, password)).start()
 
-    def _send_login_request(self, email, password):
-        url = f"{API_BASE_URL}/login"
+    def do_register(self, instance):
+        email = self.email_input.text.strip()
+        password = self.password_input.text.strip()
+
+        if not email or not password:
+            self.status_label.text = "Enter email and password to register."
+            return
+
+        self.status_label.text = "Registering..."
+        threading.Thread(target=self._send_request, args=(f"{API_BASE_URL}/register", email, password)).start()
+
+    def _send_request(self, url, email, password):
         payload = json.dumps({"email": email, "password": password}).encode('utf-8')
-        
         req = urllib.request.Request(
             url,
             data=payload,
@@ -78,11 +115,12 @@ class LoginScreen(BoxLayout):
         )
 
         try:
-            with urllib.request.urlopen(req, timeout=10) as response:
+            # Increased timeout to 45 seconds to handle Render free-tier cold starts
+            with urllib.request.urlopen(req, timeout=45) as response:
                 result = json.loads(response.read().decode('utf-8'))
-                self.update_status(f"Success: Welcome {result.get('user', '')}!", success=True)
-        except Exception as e:
-            self.update_status("Login failed: Network or server error", success=False)
+                self.update_status(f"Success: {result.get('message', 'Done!')}", success=True)
+        except Exception:
+            self.update_status("Login failed: Server sleeping or unreachable", success=False)
 
     @mainthread
     def update_status(self, message, success=False):
