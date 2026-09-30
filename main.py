@@ -1,5 +1,6 @@
 import urllib.request
 import json
+import ssl
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
@@ -11,28 +12,31 @@ import threading
 
 API_BASE_URL = "https://sports-beacon-api.onrender.com"
 
+# Create unverified SSL context to prevent Android certificate missing errors
+ssl_context = ssl._create_unverified_context()
+
 class LoginScreen(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
-        self.padding = [40, 20, 40, 20]
-        self.spacing = 12
+        self.padding = [40, 40, 40, 40]
+        self.spacing = 15
 
-        # Top flexible spacer to center contents vertically
+        # Flexible top spacer
         self.add_widget(Widget(size_hint_y=1))
 
         self.add_widget(Label(
             text="SPORTS BEACON",
-            font_size='26sp',
+            font_size='28sp',
             bold=True,
             color=(0, 0.5, 0.5, 1),
             size_hint_y=None,
-            height=40
+            height=45
         ))
         
         self.add_widget(Label(
             text="Coastal Matchmaking Platform",
-            font_size='13sp',
+            font_size='14sp',
             color=(0.6, 0.6, 0.6, 1),
             size_hint_y=None,
             height=25
@@ -43,7 +47,7 @@ class LoginScreen(BoxLayout):
             multiline=False,
             write_tab=False,
             size_hint_y=None,
-            height=45
+            height=48
         )
         self.add_widget(self.email_input)
 
@@ -53,7 +57,7 @@ class LoginScreen(BoxLayout):
             multiline=False,
             write_tab=False,
             size_hint_y=None,
-            height=45
+            height=48
         )
         self.add_widget(self.password_input)
 
@@ -61,7 +65,7 @@ class LoginScreen(BoxLayout):
             text="LOG IN",
             background_color=(0, 0.4, 0.4, 1),
             size_hint_y=None,
-            height=48
+            height=50
         )
         self.login_btn.bind(on_press=self.do_login)
         self.add_widget(self.login_btn)
@@ -70,7 +74,7 @@ class LoginScreen(BoxLayout):
             text="REGISTER ACCOUNT",
             background_color=(0.2, 0.2, 0.2, 1),
             size_hint_y=None,
-            height=42
+            height=45
         )
         self.register_btn.bind(on_press=self.do_register)
         self.add_widget(self.register_btn)
@@ -79,11 +83,11 @@ class LoginScreen(BoxLayout):
             text="",
             color=(0.8, 0.2, 0.2, 1),
             size_hint_y=None,
-            height=35
+            height=40
         )
         self.add_widget(self.status_label)
 
-        # Bottom flexible spacer
+        # Flexible bottom spacer
         self.add_widget(Widget(size_hint_y=1))
 
     def do_login(self, instance):
@@ -111,15 +115,16 @@ class LoginScreen(BoxLayout):
             data=payload,
             headers={
                 'Content-Type': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Android Mobile App)'
+                'User-Agent': 'Mozilla/5.0'
             }
         )
         try:
-            with urllib.request.urlopen(req, timeout=45) as response:
+            # Pass the unverified ssl context directly to urlopen
+            with urllib.request.urlopen(req, timeout=45, context=ssl_context) as response:
                 result = json.loads(response.read().decode('utf-8'))
                 self.update_status(f"Success: {result.get('message', 'Done!')}", success=True)
         except Exception as e:
-            self.update_status(f"Error: Server unreachable", success=False)
+            self.update_status(f"Error: {str(e)}", success=False)
 
     @mainthread
     def update_status(self, message, success=False):
