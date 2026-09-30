@@ -5,7 +5,7 @@ package.domain = org.sportsbeacon
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,db
 version = 0.2
-requirements = python3,kivy==2.3.1,pillow,urllib3,plyer
+requirements = python3,kivy==2.3.1,pillow,urllib3,plyer,openssl
 orientation = portrait
 fullscreen = 0
 android.permissions = INTERNET,ACCESS_NETWORK_STATE
