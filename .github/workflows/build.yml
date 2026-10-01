@@ -52,7 +52,7 @@ jobs:
           export WARN_ON_ROOT=0
           python -m buildozer -v android debug || (
             echo "================ FATAL ERROR LOG ================"
-            find .buildozer/ -name "build.log" -exec grep -i -C 5 "error" {} + | tail -n 100 || true
+            find . -name "build.log" -exec grep -i -C 5 "error" {} + || find ~/.buildozer -name "*.log" -exec tail -n 50 {} + || true
             exit 1
           )
 
