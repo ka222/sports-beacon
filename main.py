@@ -150,9 +150,7 @@ class SportsBeaconApp(App):
         init_db()
         self.sm = ScreenManager()
 
-        # -----------------------------
-        # 1. LOGIN SCREEN
-        # -----------------------------
+        # LOGIN SCREEN
         login_screen = Screen(name="login")
         layout = BoxLayout(orientation="vertical", spacing=12, padding=24)
         layout.add_widget(Widget(size_hint_y=1))
@@ -189,9 +187,7 @@ class SportsBeaconApp(App):
         login_screen.add_widget(layout)
         self.sm.add_widget(login_screen)
 
-        # -----------------------------
-        # 2. SIGNUP SCREEN
-        # -----------------------------
+        # SIGNUP SCREEN
         signup_screen = Screen(name="signup")
         signup_scroll = ScrollView()
         signup_layout = BoxLayout(orientation="vertical", spacing=10, padding=20, size_hint_y=None)
@@ -222,9 +218,7 @@ class SportsBeaconApp(App):
         signup_screen.add_widget(signup_scroll)
         self.sm.add_widget(signup_screen)
 
-        # -----------------------------
-        # 3. FEED SCREEN
-        # -----------------------------
+        # FEED SCREEN
         self.feed_screen = Screen(name="feed")
         main_feed_layout = BoxLayout(orientation="vertical", padding=12, spacing=10)
 
@@ -240,7 +234,7 @@ class SportsBeaconApp(App):
         header_box.add_widget(logout_btn)
         main_feed_layout.add_widget(header_box)
 
-        # Filters Section
+        # Filters
         filter_container = BoxLayout(orientation="vertical", spacing=6, size_hint_y=None)
         filter_container.bind(minimum_height=filter_container.setter("height"))
 
@@ -274,15 +268,10 @@ class SportsBeaconApp(App):
 
         return self.sm
 
-    # ==========================================
-    # SEARCH & FILTER LOGIC
-    # ==========================================
-
     def execute_search(self, instance=None):
         self.current_search_query = str(self.filter_input.text or "").strip().lower()
         self.current_venue_query = str(self.venue_filter_input.text or "").strip().lower()
         
-        # Robust date parsing (handles both YYYY-MM-DD and DD/MM/YYYY inputs)
         raw_date = str(self.date_filter_input.text or "").strip()
         if "/" in raw_date:
             parts = raw_date.split("/")
@@ -293,10 +282,6 @@ class SportsBeaconApp(App):
         self.feed_list.clear_widgets()
         self.cards_dict.clear()
         self.load_feed(force=True)
-
-    # ==========================================
-    # AUTHENTICATION
-    # ==========================================
 
     def register_user(self, instance):
         email = self.su_email.text.strip().lower()
@@ -364,10 +349,6 @@ class SportsBeaconApp(App):
         self.feed_list.clear_widgets()
         self.sm.current = 'login'
 
-    # ==========================================
-    # FEED & MATCH MANAGEMENT
-    # ==========================================
-
     def load_feed(self, dt=None, force=False):
         if not self.current_user or self.sm.current != 'feed':
             return
@@ -385,7 +366,6 @@ class SportsBeaconApp(App):
         for m in matches:
             m_id = m["id"]
             
-            # Fetch joined players
             cursor.execute("""
                 SELECT u.id, u.name 
                 FROM match_players mp
@@ -395,7 +375,6 @@ class SportsBeaconApp(App):
             players = cursor.fetchall()
             player_ids = [p["id"] for p in players]
 
-            # Filters evaluation
             search_str = f"{m['sport']} {m['town']} {m['host_name']}".lower()
             if self.current_search_query and self.current_search_query not in search_str:
                 continue
@@ -404,7 +383,6 @@ class SportsBeaconApp(App):
             if self.current_venue_query and self.current_venue_query not in m['venue'].lower():
                 continue
 
-            # Render card if missing or requested
             if m_id not in self.cards_dict or force:
                 card = self.create_match_card(m, player_ids)
                 self.cards_dict[m_id] = card
@@ -482,10 +460,6 @@ class SportsBeaconApp(App):
         self.show_popup("Success", "Match deleted.")
         self.execute_search()
 
-    # ==========================================
-    # POST NEW MATCH
-    # ==========================================
-
     def open_post_dialog(self, instance):
         content = BoxLayout(orientation="vertical", spacing=8, padding=10)
         
@@ -520,7 +494,6 @@ class SportsBeaconApp(App):
                 self.show_popup("Error", "Please fill in all fields.")
                 return
 
-            # Sanitize date input format automatically
             if "/" in d:
                 parts = d.split("/")
                 if len(parts) == 3:
@@ -534,7 +507,6 @@ class SportsBeaconApp(App):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (m_id, self.current_user["id"], s, t, sk, d, tm, v, int(mp)))
             
-            # Host joins match automatically
             cursor.execute("INSERT INTO match_players (match_id, user_id) VALUES (?, ?)", (m_id, self.current_user["id"]))
             conn.commit()
             conn.close()
@@ -546,10 +518,6 @@ class SportsBeaconApp(App):
         post_sub_btn = OvalButton(text="Publish Match", on_press_callback=submit)
         content.add_widget(post_sub_btn)
         popup.open()
-
-    # ==========================================
-    # MESSAGING & CHAT SYSTEM
-    # ==========================================
 
     def open_chat_dialog(self, match_id):
         self.active_chat_match_id = match_id
@@ -617,10 +585,6 @@ class SportsBeaconApp(App):
 
     def open_inbox(self, instance):
         self.show_popup("Inbox", "Select 'Chat' directly on any match card to view or send group messages.")
-
-    # ==========================================
-    # UTILITY HELPERS
-    # ==========================================
 
     def show_popup(self, title, message):
         content = BoxLayout(orientation="vertical", padding=10, spacing=10)
