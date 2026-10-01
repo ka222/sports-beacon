@@ -6,13 +6,12 @@ import math
 from datetime import datetime, timedelta
 
 from kivy.app import App
-from kivy.clock import Clock, mainthread
-from kivy.graphics import Color, Rectangle, RoundedRectangle, Ellipse
+from kivy.clock import Clock
+from kivy.graphics import Color, Rectangle, RoundedRectangle
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
@@ -226,6 +225,10 @@ class SportsBeaconApp(App):
         btn.bind(on_release=popup.dismiss)
         popup.open()
 
+    def clear_login_fields(self, instance=None):
+        self.login_email.text = ""
+        self.login_pass.text = ""
+
     def build(self):
         self.sm = ScreenManager()
 
@@ -237,14 +240,37 @@ class SportsBeaconApp(App):
         layout.add_widget(Label(text="SPORTS BEACON", font_size="26sp", bold=True, color=(0, 0.6, 0.6, 1), size_hint_y=None, height=40))
         layout.add_widget(Label(text="Coastal Matchmaking Platform", font_size="14sp", color=(0.6, 0.6, 0.6, 1), size_hint_y=None, height=25))
 
-        self.login_email = TextInput(hint_text="Email Address", multiline=False, size_hint_y=None, height=45)
-        self.login_pass = TextInput(hint_text="Password", password=True, multiline=False, size_hint_y=None, height=45)
+        self.login_email = TextInput(
+            hint_text="Email Address",
+            multiline=False,
+            size_hint_y=None,
+            height=48,
+            write_tab=False,
+            input_type='mail'
+        )
+        self.login_pass = TextInput(
+            hint_text="Password",
+            password=True,
+            multiline=False,
+            size_hint_y=None,
+            height=48,
+            write_tab=False
+        )
         
+        clear_btn = OvalButton(
+            text="Clear Input Fields", 
+            on_press_callback=self.clear_login_fields, 
+            bg_color=(0.3, 0.3, 0.3, 1),
+            size_hint_y=None,
+            height=36
+        )
+
         login_btn = OvalButton(text="LOG IN", on_press_callback=self.verify_login)
         signup_redirect_btn = OvalButton(text="Create an Account", on_press_callback=lambda x: setattr(self.sm, 'current', 'signup'), bg_color=(0.2, 0.2, 0.2, 1))
 
         layout.add_widget(self.login_email)
         layout.add_widget(self.login_pass)
+        layout.add_widget(clear_btn)
         layout.add_widget(login_btn)
         layout.add_widget(signup_redirect_btn)
         layout.add_widget(Widget(size_hint_y=1))
@@ -260,12 +286,12 @@ class SportsBeaconApp(App):
 
         signup_layout.add_widget(Label(text="Create Account", font_size="22sp", bold=True, color=(0, 0.6, 0.6, 1), size_hint_y=None, height=35))
         
-        self.su_name = TextInput(hint_text="Full Name", multiline=False, size_hint_y=None, height=42)
-        self.su_email = TextInput(hint_text="Email Address", multiline=False, size_hint_y=None, height=42)
-        self.su_pass = TextInput(hint_text="Password", password=True, multiline=False, size_hint_y=None, height=42)
-        self.su_town = TextInput(hint_text="Coastal Area (e.g. Worthing)", multiline=False, size_hint_y=None, height=42)
-        self.su_sport = TextInput(hint_text="Preferred Sport (e.g. Tennis)", multiline=False, size_hint_y=None, height=42)
-        self.su_skill = TextInput(hint_text="Skill Level", multiline=False, size_hint_y=None, height=42)
+        self.su_name = TextInput(hint_text="Full Name", multiline=False, size_hint_y=None, height=42, write_tab=False)
+        self.su_email = TextInput(hint_text="Email Address", multiline=False, size_hint_y=None, height=42, write_tab=False, input_type='mail')
+        self.su_pass = TextInput(hint_text="Password", password=True, multiline=False, size_hint_y=None, height=42, write_tab=False)
+        self.su_town = TextInput(hint_text="Coastal Area (e.g. Worthing)", multiline=False, size_hint_y=None, height=42, write_tab=False)
+        self.su_sport = TextInput(hint_text="Preferred Sport (e.g. Tennis)", multiline=False, size_hint_y=None, height=42, write_tab=False)
+        self.su_skill = TextInput(hint_text="Skill Level", multiline=False, size_hint_y=None, height=42, write_tab=False)
 
         register_btn = OvalButton(text="REGISTER", on_press_callback=self.register_user)
         back_login_btn = OvalButton(text="Back to Login", on_press_callback=lambda x: setattr(self.sm, 'current', 'login'), bg_color=(0.2, 0.2, 0.2, 1))
@@ -303,11 +329,11 @@ class SportsBeaconApp(App):
         filter_container = BoxLayout(orientation="vertical", spacing=6, size_hint_y=None)
         filter_container.bind(minimum_height=filter_container.setter("height"))
 
-        self.filter_input = TextInput(hint_text="Search Sport, Town, or Player...", multiline=False, size_hint_y=None, height=40)
+        self.filter_input = TextInput(hint_text="Search Sport, Town, or Player...", multiline=False, size_hint_y=None, height=40, write_tab=False)
         
         row2_box = BoxLayout(orientation="horizontal", spacing=6, size_hint_y=None, height=40)
-        self.date_filter_input = TextInput(hint_text="Date (YYYY-MM-DD)", multiline=False, size_hint_x=0.4)
-        self.venue_filter_input = TextInput(hint_text="Venue", multiline=False, size_hint_x=0.4)
+        self.date_filter_input = TextInput(hint_text="Date (YYYY-MM-DD)", multiline=False, size_hint_x=0.4, write_tab=False)
+        self.venue_filter_input = TextInput(hint_text="Venue", multiline=False, size_hint_x=0.4, write_tab=False)
         filter_apply_btn = OvalButton(text="Search", on_press_callback=self.execute_search, size_hint_x=0.2)
 
         row2_box.add_widget(self.date_filter_input)
@@ -517,12 +543,12 @@ class SportsBeaconApp(App):
     # --- POST DIALOG ---
     def open_post_dialog(self, instance):
         box = BoxLayout(orientation="vertical", spacing=8, padding=10)
-        sport_in = TextInput(hint_text="Sport (e.g. Volleyball)", multiline=False)
-        town_in = TextInput(hint_text="Town (e.g. Worthing)", multiline=False)
-        skill_in = TextInput(hint_text="Skill Level", multiline=False)
-        date_in = TextInput(hint_text="Date (YYYY-MM-DD)", multiline=False)
-        time_in = TextInput(hint_text="Time (e.g. 14:00)", multiline=False)
-        venue_in = TextInput(hint_text="Venue Name", multiline=False)
+        sport_in = TextInput(hint_text="Sport (e.g. Volleyball)", multiline=False, write_tab=False)
+        town_in = TextInput(hint_text="Town (e.g. Worthing)", multiline=False, write_tab=False)
+        skill_in = TextInput(hint_text="Skill Level", multiline=False, write_tab=False)
+        date_in = TextInput(hint_text="Date (YYYY-MM-DD)", multiline=False, write_tab=False)
+        time_in = TextInput(hint_text="Time (e.g. 14:00)", multiline=False, write_tab=False)
+        venue_in = TextInput(hint_text="Venue Name", multiline=False, write_tab=False)
 
         box.add_widget(sport_in)
         box.add_widget(town_in)
@@ -588,7 +614,7 @@ class SportsBeaconApp(App):
         msg_history.bind(size=msg_history.setter('text_size'))
         
         input_box = BoxLayout(orientation="horizontal", spacing=5, size_hint_y=0.3)
-        msg_input = TextInput(hint_text="Type message...", multiline=False)
+        msg_input = TextInput(hint_text="Type message...", multiline=False, write_tab=False)
         
         def refresh_chat():
             conn = sqlite3.connect(DB_NAME)
