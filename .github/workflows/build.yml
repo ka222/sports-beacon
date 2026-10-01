@@ -34,13 +34,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "cython<3.0.0" buildozer
 
-      - name: Configure buildozer.spec
-        run: |
-          if [ -f buildozer.spec ]; then
-            sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-            sed -i 's/android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
-          fi
-
       - name: Pre-accept Android SDK Licenses
         run: |
           mkdir -p ~/.android
@@ -50,6 +43,8 @@ jobs:
       - name: Build APK & Extract Error Log
         run: |
           export WARN_ON_ROOT=0
+          # Clear stale cache to pull the p4a develop branch fix
+          rm -rf .buildozer ~/.buildozer
           python -m buildozer -v android debug || (
             echo "================ FATAL ERROR LOG ================"
             find . -name "build.log" -exec grep -i -C 5 "error" {} + || find ~/.buildozer -name "*.log" -exec tail -n 50 {} + || true
