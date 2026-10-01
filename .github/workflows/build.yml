@@ -31,8 +31,8 @@ jobs:
 
       - name: Install Buildozer and Cython
         run: |
-          pip install --upgrade pip
-          pip install "cython<3.0.0" buildozer
+          python -m pip install --upgrade pip
+          python -m pip install "cython<3.0.0" buildozer
 
       - name: Configure buildozer.spec
         run: |
@@ -45,14 +45,14 @@ jobs:
         run: |
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
-          yes | buildozer android update || true
+          yes | python -m buildozer android update || true
 
       - name: Build APK & Extract Error Log
         run: |
           export WARN_ON_ROOT=0
-          buildozer -v android debug || (
+          python -m buildozer -v android debug || (
             echo "================ FATAL ERROR LOG ================"
-            cat ~/.buildozer/android/platform/build-*/build.log | grep -i -C 5 "error" | tail -n 50
+            find .buildozer/ -name "build.log" -exec grep -i -C 5 "error" {} + | tail -n 100 || true
             exit 1
           )
 
